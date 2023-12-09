@@ -8,10 +8,15 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.ImageIcon;
@@ -20,6 +25,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 public class Game implements KeyListener{
@@ -86,7 +92,7 @@ public class Game implements KeyListener{
         window.setFocusable(true);
         window.setVisible(true);
 
-        // startGameLoop();
+        startGameLoop();
         // Sever Command: STARTGAME
 
         // new thread
@@ -373,16 +379,53 @@ public class Game implements KeyListener{
         return (frogger.getPosY() >= 32 && frogger.getPosY() <= 230);
     }
 
+
+    // SOCKET FUNCTION
+    private static Socket setupSocketConnection() throws IOException {
+        final int SCOKET_PORT = 5556;
+        Socket socket = new Socket("localhost", SCOKET_PORT);
+        return socket;
+    }
+
+    private static void sendToSever(PrintWriter out, Scanner in, String commang ) {
+      System.out.println("Sending: " + commang);
+      out.println(commang);
+      out.flush();
+      String response = in.nextLine();
+      System.out.println("Server Response: " + response);
+    }
+
+
     // ----- CONTROLS -----
     @Override
     public void keyPressed(KeyEvent e) {
+
+      try {
+
+
+          // Set up socket/communication channel
+          Socket s = setupSocketConnection();
+          OutputStream outStream = s.getOutputStream();
+          PrintWriter out = new PrintWriter(outStream, true);
+          InputStream inStream = s.getInputStream();
+          Scanner in = new Scanner(inStream);
+
+
         if (!controlsEnabled) {
             return;
         }
         if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
           Audio.playMoveSound();
           System.out.println("Forward Hop!");
+
           // SERVER: SEND FROGGER MOVE UP
+          sendToSever(out, in, "MOVEUP");
+
+          // // Update frogger position
+          int newY = Integer.parseInt(in.nextLine());
+          frogger.setPosY(newY);
+
+          froggerLabel.setLocation(frogger.getPosX(), frogger.getPosY());
 
           // frogger.moveUp();
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
@@ -419,6 +462,10 @@ public class Game implements KeyListener{
 
         // Update froggerLabel position
         froggerLabel.setLocation(frogger.getPosX(), frogger.getPosY());
+
+        } catch (IOException e1) {
+          e1.printStackTrace();
+        }
     }
 
     @Override
