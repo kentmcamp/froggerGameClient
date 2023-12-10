@@ -8,9 +8,9 @@ public class Frogger extends Sprite{
     }
 
     // Methods
-    // public void moveUp() {
-    //     this.setPosY(this.getPosY() - Properties.FROGGER_STEP);
-    // }
+    public void moveUp() {
+        this.setPosY(this.getPosY() - Properties.FROGGER_STEP);
+    }
     public void moveDown() {
         this.setPosY(this.getPosY() + Properties.FROGGER_STEP);
     }

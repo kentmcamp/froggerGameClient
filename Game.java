@@ -8,15 +8,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.ImageIcon;
@@ -25,7 +24,6 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 public class Game implements KeyListener{
@@ -54,6 +52,13 @@ public class Game implements KeyListener{
     }
 
     public Game() {
+        // Start Game Client
+        try {
+          this.startGameClient();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
         // Create new window and set properties
         JFrame window = new JFrame("Frogger");
         window.setSize(Properties.SCREEN_X, Properties.SCREEN_Y);
@@ -75,6 +80,9 @@ public class Game implements KeyListener{
         // Add elements to the content pane
         contentPane.add(spawnFrogger());
 
+        // Initialize Cars and Logs
+        // GetCar and GetLog commands from server
+
         initializeCars(4, 250, 200, 100, 0, "bike.gif");
         initializeCars(4, 380, 200, 200, 1, "car2.gif");
         initializeCars(4, 440, 200, 400, 2, "car.gif");
@@ -93,20 +101,7 @@ public class Game implements KeyListener{
         window.setVisible(true);
 
         startGameLoop();
-        // Sever Command: STARTGAME
-
-        // new thread
-          // SEND GETFROGGER\n to server every 500ms
-
-          // new thread
-            // SEND GETCARS\n to server every 500ms
-
-          // new thread
-            // SEND GETLOGS\n to server every 500ms
-
-          // set up listening server to receive data sent from server.
-            // pass to FroggerServer
-        }
+    }
 
     // ----- WINDOW & GUI ELEMENTS -----
     public JLabel setBackground() {
@@ -153,7 +148,6 @@ public class Game implements KeyListener{
         exitButton.setForeground(Color.WHITE);
         exitButton.setBorder(new EmptyBorder(0,0,0,0));
         exitButton.addActionListener(e -> {
-          // SERVER COMMAND: SAVEGAME
             isGameOver = true;
             Audio.stopBackgroundMusic();
             saveGame();
@@ -219,7 +213,6 @@ public class Game implements KeyListener{
           carStart(xSpace, height, image, speed, i, row);
         }
       }
-
     public void carStart(int width, int height, String image, int speed, int indexNumber, int row) {
       // Car Setup
       Car car = new Car(width, height, 64, 32, image, true, speed);
@@ -238,12 +231,15 @@ public class Game implements KeyListener{
       car.setCarLabel(carLabel);
 
       // Set speed
-      car.setSpeed(speed);
+      // car.setSpeed(speed);
+      // SEND GETCARSPEED/n command to server.
 
       // Add car to content pane
       car.setIsMoving(true);
       contentPane.add(carLabel);
-      car.startThread();
+
+      // SEND STARTCAR/n command to server.
+      // car.startThread();
 
       // Add car to array
       cars[indexNumber][row] = car;
@@ -256,7 +252,6 @@ public class Game implements KeyListener{
         logStart(xSpace, height, speed, i, row);
       }
     }
-
     public void logStart(
       int xSpace,
       int posY,
@@ -285,7 +280,9 @@ public class Game implements KeyListener{
 
       // Add log to content pane
       log.setIsMoving(true);
-      log.startThread();
+
+      // SEND STARTLOG/n command to server.
+      // log.startThread();
       contentPane.add(logLabel);
 
       // Add log to array
@@ -379,55 +376,22 @@ public class Game implements KeyListener{
         return (frogger.getPosY() >= 32 && frogger.getPosY() <= 230);
     }
 
-
-    // SOCKET FUNCTION
-    private static Socket setupSocketConnection() throws IOException {
-        final int SCOKET_PORT = 5556;
-        Socket socket = new Socket("localhost", SCOKET_PORT);
-        return socket;
-    }
-
-    private static void sendToSever(PrintWriter out, Scanner in, String commang ) {
-      System.out.println("Sending: " + commang);
-      out.println(commang);
-      out.flush();
-      String response = in.nextLine();
-      System.out.println("Server Response: " + response);
-    }
-
-
     // ----- CONTROLS -----
     @Override
     public void keyPressed(KeyEvent e) {
-
-      try {
-
-
-          // Set up socket/communication channel
-          Socket s = setupSocketConnection();
-          OutputStream outStream = s.getOutputStream();
-          PrintWriter out = new PrintWriter(outStream, true);
-          InputStream inStream = s.getInputStream();
-          Scanner in = new Scanner(inStream);
-
-
         if (!controlsEnabled) {
             return;
         }
         if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
           Audio.playMoveSound();
           System.out.println("Forward Hop!");
-
-          // SERVER: SEND FROGGER MOVE UP
-          sendToSever(out, in, "MOVEUP");
-
-          // // Update frogger position
-          int newY = Integer.parseInt(in.nextLine());
-          frogger.setPosY(newY);
-
-          froggerLabel.setLocation(frogger.getPosX(), frogger.getPosY());
-
           // frogger.moveUp();
+          // SERVEFR SEND FROGGERMOVEUP COMMAND
+          try {
+            sendCommand("MOVEUP");
+          } catch (IOException e1) {
+            e1.printStackTrace();
+          }
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
           Audio.playMoveSound();
           System.out.println("Back Hop!");
@@ -436,7 +400,11 @@ public class Game implements KeyListener{
               System.out.println("You Shall Not Pass!");
               return;
           }
-          frogger.moveDown();
+          try {
+          sendCommand("MOVEDOWN");
+          } catch (IOException e1) {
+            e1.printStackTrace();
+          }
         } else if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_A) {
           Audio.playMoveSound();
           System.out.println("Left Hop!");
@@ -445,7 +413,11 @@ public class Game implements KeyListener{
               System.out.println("You Shall Not Pass!");
               return;
           }
-          frogger.moveLeft();
+          try {
+          sendCommand("MOVELEFT");
+          } catch (IOException e1) {
+            e1.printStackTrace();
+          }
         } else if (e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_D) {
           Audio.playMoveSound();
           System.out.println("Right Hop!");
@@ -454,7 +426,11 @@ public class Game implements KeyListener{
               System.out.println("You Shall Not Pass!");
               return;
           }
-          frogger.moveRight();
+          try {
+          sendCommand("MOVERIGHT");
+          } catch (IOException e1) {
+            e1.printStackTrace();
+          }
 
         } else {
             System.out.println("Invalid Key!");
@@ -462,10 +438,6 @@ public class Game implements KeyListener{
 
         // Update froggerLabel position
         froggerLabel.setLocation(frogger.getPosX(), frogger.getPosY());
-
-        } catch (IOException e1) {
-          e1.printStackTrace();
-        }
     }
 
     @Override
@@ -474,7 +446,7 @@ public class Game implements KeyListener{
     @Override
     public void keyReleased(KeyEvent e) {}
 
-     // ---DATABASE ---
+     // --- DATABASE ---
     public void saveGame() {
     // Get Name
     String name = JOptionPane.showInputDialog("Enter Your Name (Cancel To Not Save Score): ");
@@ -547,4 +519,75 @@ public class Game implements KeyListener{
     }
   }
 
+
+    // --- SERVER - CLIENT SIDE ---
+     // --- SERVER: START GAME CLIENT ---
+    public void startGameClient() throws IOException {
+
+      final int CLIENT_PORT = 5656;
+      final int SERVER_PORT = 5556;
+      final ServerSocket client = new ServerSocket(CLIENT_PORT);
+
+      //set up listening server
+      Thread t1 = new Thread ( new Runnable () {
+        public void run ( ) {
+          synchronized(this) {
+
+            System.out.println("Waiting for server responses...");
+            while(true) {
+              Socket s2;
+              try {
+                s2 = client.accept();
+                ClientService myService = new ClientService (s2);
+                Thread t = new Thread(myService);
+                t.start();
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
+              System.out.println("Client" + CLIENT_PORT + "connected");
+            }
+          }
+        }
+      });
+      t1.start( );
+
+      /*
+      //set up a communication socket
+      Socket s = new Socket("localhost", SERVER_PORT);
+
+      //Initialize data stream to send data out
+      OutputStream outstream = s.getOutputStream();
+      PrintWriter out = new PrintWriter(outstream);
+
+
+
+      String command = "PLAYER 2 UP\n";
+      System.out.println("Sending: " + command);
+      out.println(command);
+      out.flush();
+
+      command = "PLAYER 1 DOWN\n";
+      System.out.println("Sending: " + command);
+      out.println(command);
+      out.flush();
+
+      s.close();
+      */
+    }
+
+    //  CLIENT - Send Commands to Server
+   public void sendCommand(String command) throws IOException {
+      final int CLIENT_PORT = 5656;
+      Socket socket = new Socket("localhost", CLIENT_PORT);
+
+      // Initialize data stream to send data out
+      OutputStream outstream = socket.getOutputStream();
+      PrintWriter out = new PrintWriter(outstream);
+
+      System.out.println("Sending: " + command);
+      out.println(command);
+      out.flush();
+
+      socket.close();
+   }
 }

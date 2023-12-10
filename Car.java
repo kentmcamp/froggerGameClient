@@ -1,7 +1,6 @@
 import javax.swing.JLabel;
 
-public class Car extends Sprite implements Runnable
-{
+public class Car extends Sprite {
     // Attributes
     private boolean isMoving;
     private int speed;
@@ -51,6 +50,7 @@ public class Car extends Sprite implements Runnable
 
     // Methods
         // Start and stop thread
+        /*
     public void startThread()
      {
         this.isMoving = true;
@@ -58,6 +58,9 @@ public class Car extends Sprite implements Runnable
         thread.start();
     }
 
+    */
+
+    /*
     public void stopThread()
     {
         this.isMoving = false;
@@ -67,12 +70,14 @@ public class Car extends Sprite implements Runnable
         }
 
     }
+    */
+
 
         // Run method
+        /*
     @Override
     public void run() {
         System.out.println("Car Thread Started");
-
         while(this.isMoving && !Thread.currentThread().isInterrupted()) {
             int x = this.getPosX(); // Get current x position
 
@@ -99,13 +104,10 @@ public class Car extends Sprite implements Runnable
                 System.out.println("Car Thread Interrupted");
                 Thread.currentThread().interrupt();
                 break;
-            }
 
+            }
+            throw new UnsupportedOperationException("Unimplemented method 'run'");
 
         }
-
-        throw new UnsupportedOperationException("Unimplemented method 'run'");
-
+        */
     }
-
-}

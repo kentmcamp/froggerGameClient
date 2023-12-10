@@ -1,6 +1,6 @@
 import javax.swing.JLabel;
 
-public class Log extends Sprite implements Runnable{
+public class Log extends Sprite{
 
     // Attributes
     private boolean isMoving;
@@ -52,12 +52,13 @@ public class Log extends Sprite implements Runnable{
 
     // Methods
         // Start and stop thread
+        /*
     public void startThread() {
         this.isMoving = true;
         thread = new Thread(this, "Log Thread");
         thread.start();
     }
-
+     *//*
     public void stopThread() {
         this.isMoving = false;
 
@@ -66,7 +67,9 @@ public class Log extends Sprite implements Runnable{
         }
 
     }
+ */
 
+    /*
     @Override
     public void run() {
         System.out.println("Log Thread Started");
@@ -101,10 +104,9 @@ public class Log extends Sprite implements Runnable{
 
 
         }
-
         throw new UnsupportedOperationException("Unimplemented method 'run'");
     }
-
+ */
 
 
 }
