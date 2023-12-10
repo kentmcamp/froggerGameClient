@@ -551,28 +551,6 @@ public class Game implements KeyListener{
       });
       t1.start( );
 
-      /*
-      //set up a communication socket
-      Socket s = new Socket("localhost", SERVER_PORT);
-
-      //Initialize data stream to send data out
-      OutputStream outstream = s.getOutputStream();
-      PrintWriter out = new PrintWriter(outstream);
-
-
-
-      String command = "PLAYER 2 UP\n";
-      System.out.println("Sending: " + command);
-      out.println(command);
-      out.flush();
-
-      command = "PLAYER 1 DOWN\n";
-      System.out.println("Sending: " + command);
-      out.println(command);
-      out.flush();
-
-      s.close();
-      */
     }
 
     //  CLIENT - Send Commands to Server
